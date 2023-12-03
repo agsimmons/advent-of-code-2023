@@ -5,6 +5,65 @@ use std::path::Path;
 
 fn main() {
     part_one();
+    part_two();
+}
+
+struct Game {
+    num: u32,
+    handfuls: Vec<Handful>,
+}
+
+impl Game {
+    pub fn from_game_string(game_string: &str) -> Self {
+        let line_parts: Vec<&str> = game_string.split(": ").collect();
+
+        let num = line_parts
+            .get(0)
+            .expect("No game string found")
+            .replace("Game ", "")
+            .parse::<u32>()
+            .expect("Could not parse game_num as u32");
+
+        let handfuls: Vec<Handful> = line_parts
+            .get(1)
+            .expect("No handfuls string found")
+            .split("; ")
+            .map(|handful_string| Handful::from_handful_string(handful_string))
+            .collect();
+
+        Self { num, handfuls }
+    }
+
+    pub fn min_counts_required(&self) -> Handful {
+        let mut min_num_red: u32 = 0;
+        let mut min_num_green: u32 = 0;
+        let mut min_num_blue: u32 = 0;
+
+        // TODO
+        self.handfuls.iter().for_each(|handful| {
+            if handful.num_red > min_num_red {
+                min_num_red = handful.num_red;
+            }
+            if handful.num_green > min_num_green {
+                min_num_green = handful.num_green;
+            }
+            if handful.num_blue > min_num_blue {
+                min_num_blue = handful.num_blue;
+            }
+        });
+
+        Handful {
+            num_red: min_num_red,
+            num_green: min_num_green,
+            num_blue: min_num_blue,
+        }
+    }
+
+    pub fn get_power(&self) -> u32 {
+        let min_counts_required = self.min_counts_required();
+
+        min_counts_required.num_red * min_counts_required.num_blue * min_counts_required.num_green
+    }
 }
 
 struct Handful {
@@ -75,33 +134,35 @@ fn part_one() {
     if let Ok(lines) = read_lines("./input.txt") {
         for line in lines {
             if let Ok(line) = line {
-                let line_parts: Vec<&str> = line.split(": ").collect();
+                let game = Game::from_game_string(&line);
 
-                let game_num = line_parts
-                    .get(0)
-                    .expect("No game string found")
-                    .replace("Game ", "")
-                    .parse::<u32>()
-                    .expect("Could not parse game_num as u32");
-
-                let handfuls: Vec<Handful> = line_parts
-                    .get(1)
-                    .expect("No handfuls string found")
-                    .split("; ")
-                    .map(|handful_string| Handful::from_handful_string(handful_string))
-                    .collect();
-
-                let game_is_possible = handfuls
+                let game_is_possible = game
+                    .handfuls
                     .iter()
                     .all(|handful| handful.is_possible(&limit_handful));
 
                 if game_is_possible {
-                    possible_game_nums.push(game_num);
+                    possible_game_nums.push(game.num);
                 }
             }
         }
 
         println!("Problem 1: {}", possible_game_nums.iter().sum::<u32>())
+    }
+}
+
+fn part_two() {
+    if let Ok(lines) = read_lines("./input.txt") {
+        let mut powers = Vec::<u32>::new();
+
+        for line in lines {
+            if let Ok(line) = line {
+                let game = Game::from_game_string(&line);
+                powers.push(game.get_power())
+            }
+        }
+
+        println!("Problem 2: {}", powers.iter().sum::<u32>())
     }
 }
 
